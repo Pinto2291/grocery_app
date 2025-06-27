@@ -4,7 +4,7 @@ A simple, fast, and responsive web application to manage your monthly grocery li
 Website
 You can access the live application at the following URL:
 
-[[Enter Your Netlify URL Here](https://pinto2291.github.io/grocery_app/)]
+[[https://pinto2291.github.io/grocery_app/]]
 
 Features
 Real-time Budget Tracking: Instantly see your remaining budget and the difference as you add items.

@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ignacio monthly Shop</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- All CSS is now inside this <style> tag -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .sticky-header {
+            position: -webkit-sticky;
+            position: sticky;
+            top: -1px;
+            z-index: 10;
+            padding-top: 1.5rem;
+            background-color: #f3f4f6;
+            padding-bottom: 1px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-4xl">
+        
+        <header class="bg-white p-6 rounded-2xl shadow-md mb-6 fade-in relative">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 text-center" data-translate="title">Monthly Shop</h1>
+            <div class="flex justify-between items-center text-sm text-gray-500 mt-2">
+                <span id="current-date"></span>
+                <span id="current-time"></span>
+            </div>
+            <button id="translate-btn" class="absolute top-4 right-4 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-3 rounded-lg text-xs sm:text-sm transition-colors">
+                Español
+            </button>
+        </header>
+
+        <section class="sticky-header">
+            <div id="budget-section" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 fade-in">
+                <div class="bg-white p-4 rounded-xl shadow-sm">
+                    <label for="total-budget" class="block text-sm font-medium text-gray-500 mb-1" data-translate="totalBudgetLabel">Total Budget ($)</label>
+                    <input type="number" id="total-budget" class="w-full p-2 text-2xl font-semibold text-blue-600 bg-gray-50 border border-gray-200 rounded-md" placeholder="Enter budget...">
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm">
+                    <h2 class="text-sm font-medium text-gray-500 mb-1" data-translate="remainingBudgetLabel">Remaining Budget</h2>
+                    <div id="remaining-budget" class="text-2xl font-semibold text-green-600 p-2">-</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm">
+                    <h2 class="text-sm font-medium text-gray-500 mb-1" data-translate="differenceLabel">Difference</h2>
+                    <div id="difference" class="text-2xl font-semibold text-gray-700 p-2">-</div>
+                </div>
+            </div>
+        </section>
+
+        <main class="bg-white rounded-2xl shadow-md overflow-hidden fade-in">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-600">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-4 py-3 w-12 text-center" data-translate="tableHeaderNumber">#</th>
+                            <th scope="col" class="px-6 py-3" data-translate="tableHeaderItem">Item Description</th>
+                            <th scope="col" class="px-6 py-3 w-24 text-center" data-translate="tableHeaderQty">Qty</th>
+                            <th scope="col" class="px-6 py-3 w-32 text-right" data-translate="tableHeaderPrice">Price ($)</th>
+                            <th scope="col" class="px-6 py-3 w-32 text-right" data-translate="tableHeaderTotal">Total ($)</th>
+                            <th scope="col" class="px-4 py-3 w-16 text-center" data-translate="tableHeaderAction">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="grocery-list-body">
+                        <!-- Rows will be inserted by JavaScript -->
+                    </tbody>
+                    <tfoot class="bg-gray-50 font-semibold">
+                        <tr>
+                            <td colspan="4" class="px-6 py-3 text-right text-gray-800 uppercase" data-translate="totalItemsCostLabel">Total Items Cost</td>
+                            <td id="total-items-cost" class="px-6 py-3 text-right text-xl text-blue-700">0.00</td>
+                            <td class="px-4 py-3"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </main>
+
+        <footer class="mt-6 text-center fade-in">
+            <button id="add-item-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105" data-translate="addItemButton">
+                Add New Item
+            </button>
+        </footer>
+
+    </div>
+
+    <!-- All JavaScript is now inside this <script> tag -->
+    <script>
+        // This wrapper ensures the script runs only after the entire page is loaded.
+        document.addEventListener('DOMContentLoaded', () => {
+        
+            // --- DOM ELEMENT SELECTION --- //
+            const currentDateEl = document.getElementById('current-date');
+            const currentTimeEl = document.getElementById('current-time');
+            const totalBudgetInput = document.getElementById('total-budget');
+            const remainingBudgetEl = document.getElementById('remaining-budget');
+            const differenceEl = document.getElementById('difference');
+            const groceryListBody = document.getElementById('grocery-list-body');
+            const totalItemsCostEl = document.getElementById('total-items-cost');
+            const addItemBtn = document.getElementById('add-item-btn');
+            const translateBtn = document.getElementById('translate-btn');
+
+            // --- STATE MANAGEMENT WITH EXAMPLES --- //
+            let items = [
+                { description: 'Harina P.A.N.', quantity: 4, price: 1.50 },
+                { description: 'Arroz', quantity: 2, price: 1.20 },
+                { description: 'Aceite', quantity: 1, price: 3.00 },
+                { description: 'Queso Blanco', quantity: 1, price: 5.50 }
+            ];
+            let currentLanguage = 'en';
+
+            // --- TRANSLATION DATA --- //
+            const translations = {
+                en: {
+                    title: 'Monthly Shop',
+                    totalBudgetLabel: 'Total Budget ($)',
+                    remainingBudgetLabel: 'Remaining Budget',
+                    differenceLabel: 'Difference',
+                    tableHeaderNumber: '#',
+                    tableHeaderItem: 'Item Description',
+                    tableHeaderQty: 'Qty',
+                    tableHeaderPrice: 'Price ($)',
+                    tableHeaderTotal: 'Total ($)',
+                    tableHeaderAction: 'Action',
+                    totalItemsCostLabel: 'Total Items Cost',
+                    addItemButton: 'Add New Item',
+                    emptyListMessage: 'Your grocery list is empty. Click "Add New Item" to start!',
+                    overBudget: '(Over Budget)',
+                    underBudget: '(Under Budget)',
+                    enterBudgetPlaceholder: 'Enter budget...',
+                    itemNamePlaceholder: 'Item name...',
+                    translateTo: 'Español'
+                },
+                es: {
+                    title: 'Compras Mensuales',
+                    totalBudgetLabel: 'Presupuesto Total ($)',
+                    remainingBudgetLabel: 'Presupuesto Restante',
+                    differenceLabel: 'Diferencia',
+                    tableHeaderNumber: '#',
+                    tableHeaderItem: 'Descripción del Artículo',
+                    tableHeaderQty: 'Cant',
+                    tableHeaderPrice: 'Precio ($)',
+                    tableHeaderTotal: 'Total ($)',
+                    tableHeaderAction: 'Acción',
+                    totalItemsCostLabel: 'Costo Total de Artículos',
+                    addItemButton: 'Añadir Nuevo Artículo',
+                    emptyListMessage: 'Tu lista de compras está vacía. ¡Haz clic en "Añadir Nuevo Artículo" para empezar!',
+                    overBudget: '(Sobre Presupuesto)',
+                    underBudget: '(Bajo Presupuesto)',
+                    enterBudgetPlaceholder: 'Ingresa presupuesto...',
+                    itemNamePlaceholder: 'Nombre del artículo...',
+                    translateTo: 'English'
+                }
+            };
+
+            // --- CORE FUNCTIONS --- //
+            function updateDateTime() {
+                const now = new Date();
+                const locale = currentLanguage === 'es' ? 'es-VE' : 'en-US';
+                currentDateEl.textContent = now.toLocaleDateString(locale, {
+                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                });
+                currentTimeEl.textContent = now.toLocaleTimeString(locale);
+            }
+
+            function translatePage() {
+                const lang = translations[currentLanguage];
+                document.querySelectorAll('[data-translate]').forEach(el => {
+                    const key = el.dataset.translate;
+                    if (lang[key]) {
+                        el.textContent = lang[key];
+                    }
+                });
+                totalBudgetInput.placeholder = lang.enterBudgetPlaceholder;
+                translateBtn.textContent = lang.translateTo;
+                renderTable();
+            }
+
+            function renderTable() {
+                groceryListBody.innerHTML = '';
+                const lang = translations[currentLanguage];
+
+                if (items.length === 0) {
+                    groceryListBody.innerHTML = `<tr><td colspan="6" class="text-center p-8 text-gray-500">${lang.emptyListMessage}</td></tr>`;
+                } else {
+                    items.forEach((item, index) => {
+                        const row = document.createElement('tr');
+                        row.className = 'bg-white border-b hover:bg-gray-50';
+                        const itemTotal = (item.quantity * item.price).toFixed(2);
+                        row.innerHTML = `
+                            <td class="px-4 py-2 text-center text-gray-500">${index + 1}</td>
+                            <td class="px-6 py-2">
+                                <input type="text" value="${item.description}" data-index="${index}" data-field="description" class="w-full bg-transparent p-1 rounded border-gray-200 focus:border-blue-300 focus:ring-0" placeholder="${lang.itemNamePlaceholder}">
+                            </td>
+                            <td class="px-6 py-2">
+                                <input type="number" value="${item.quantity}" data-index="${index}" data-field="quantity" class="w-full bg-transparent p-1 rounded text-center border-gray-200 focus:border-blue-300 focus:ring-0" min="0">
+                            </td>
+                            <td class="px-6 py-2">
+                                 <input type="number" value="${item.price.toFixed(2)}" data-index="${index}" data-field="price" class="w-full bg-transparent p-1 rounded text-right border-gray-200 focus:border-blue-300 focus:ring-0" min="0" step="0.01">
+                            </td>
+                            <td class="px-6 py-2 font-medium text-gray-900 text-right item-total">${itemTotal}</td>
+                            <td class="px-4 py-2 text-center">
+                                <button data-index="${index}" class="delete-btn text-red-500 hover:text-red-700 text-2xl font-bold leading-none">&times;</button>
+                            </td>
+                        `;
+                        groceryListBody.appendChild(row);
+                    });
+                }
+                updateSummary();
+            }
+
+            function updateSummary() {
+                const lang = translations[currentLanguage];
+                const totalCost = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+                totalItemsCostEl.textContent = totalCost.toFixed(2);
+                
+                const totalBudget = parseFloat(totalBudgetInput.value) || 0;
+                const remaining = totalBudget - totalCost;
+                
+                remainingBudgetEl.textContent = remaining.toFixed(2);
+                
+                if (remaining < 0) {
+                    remainingBudgetEl.classList.remove('text-green-600');
+                    remainingBudgetEl.classList.add('text-red-600');
+                    differenceEl.classList.remove('text-green-500', 'text-gray-700');
+                    differenceEl.classList.add('text-red-500');
+                    differenceEl.textContent = `${remaining.toFixed(2)} ${lang.overBudget}`;
+                } else {
+                    remainingBudgetEl.classList.remove('text-red-600');
+                    remainingBudgetEl.classList.add('text-green-600');
+                    differenceEl.classList.remove('text-red-500', 'text-gray-700');
+                    differenceEl.classList.add('text-green-500');
+                    differenceEl.textContent = `${remaining.toFixed(2)} ${lang.underBudget}`;
+                }
+            }
+
+            // --- EVENT LISTENERS --- //
+            translateBtn.addEventListener('click', () => {
+                currentLanguage = currentLanguage === 'en' ? 'es' : 'en';
+                translatePage();
+            });
+
+            addItemBtn.addEventListener('click', () => {
+                items.push({ description: '', quantity: 1, price: 0 });
+                renderTable();
+            });
+
+            groceryListBody.addEventListener('input', (e) => {
+                if (e.target.matches('input')) {
+                    const index = e.target.dataset.index;
+                    const field = e.target.dataset.field;
+                    const value = e.target.type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value;
+                    items[index][field] = value;
+                    const row = e.target.closest('tr');
+                    const itemTotalEl = row.querySelector('.item-total');
+                    const newTotal = (items[index].quantity * items[index].price).toFixed(2);
+                    itemTotalEl.textContent = newTotal;
+                    updateSummary();
+                }
+            });
+                    
+            groceryListBody.addEventListener('click', (e) => {
+                if (e.target.matches('.delete-btn')) {
+                    const index = e.target.dataset.index;
+                    items.splice(index, 1);
+                    renderTable();
+                }
+            });
+
+            totalBudgetInput.addEventListener('input', updateSummary);
+
+            // --- INITIALIZATION --- //
+            totalBudgetInput.value = 50; // Set an initial budget example
+            setInterval(updateDateTime, 1000);
+            updateDateTime();
+            translatePage(); // This will also call renderTable() and updateSummary()
+        });
+    </script>
+</body>
+</html>

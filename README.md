@@ -1,4 +1,4 @@
-## Ignacio monthly Shop
+## Ignacio monthly Shop 
 A simple, fast, and responsive web application to manage your monthly grocery list and budget. This app is built with HTML, Tailwind CSS, and plain JavaScript, ensuring it runs on any device with a web browser.
 
 Website
